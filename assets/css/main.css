@@ -1,0 +1,32 @@
+@import url('https://fonts.googleapis.com/css2?family=REM:wght@300;400;500;700;800;900&family=Work+Sans:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  --tg-navy: #0f2233;
+  --tg-deep-blue: #1c5f94;
+  --tg-orange: #f27a2e;
+  --tg-amber: #f5b52e;
+  --tg-teal: #74b8b5;
+  --tg-violet: #8a6edb;
+  --tg-ice: #cedde7;
+  --tg-cloud: #d9d9d9;
+  --tg-mist: #e9eae8;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#__nuxt {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: 'Work Sans', 'REM', 'Segoe UI', sans-serif;
+  background: var(--tg-ice);
+  color: var(--tg-navy);
+}
