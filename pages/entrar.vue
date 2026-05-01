@@ -39,7 +39,7 @@ function resolveErrorMessage(error: unknown): string {
 async function redirectIfAlreadyAuthenticated() {
   const loggedIn = await auth.ensureAuthenticated();
   if (loggedIn) {
-    await navigateTo('/solicitacoes-orcamento');
+    await navigateTo('/dashboard');
   }
 }
 
@@ -63,8 +63,8 @@ async function onSubmit() {
     await auth.signIn({ email, password });
     feedback.value = 'Login realizado com sucesso. Redirecionando...';
     feedbackType.value = 'success';
-    notifications.success('Acesso liberado', 'Redirecionando para solicitações de orçamento.');
-    await navigateTo('/solicitacoes-orcamento');
+    notifications.success('Acesso liberado', 'Redirecionando para o dashboard.');
+    await navigateTo('/dashboard');
   } catch (error) {
     const message = resolveErrorMessage(error);
     feedback.value = message;
@@ -407,4 +407,3 @@ onMounted(() => {
   }
 }
 </style>
-

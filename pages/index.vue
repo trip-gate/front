@@ -6,13 +6,13 @@ const isAuthenticated = computed(() => auth.isAuthenticated.value);
 
 function goToPortal() {
   if (isAuthenticated.value) {
-    navigateTo('/solicitacoes-orcamento');
+    navigateTo('/dashboard');
     return;
   }
 
   notifications.info(
     'Acesso TripGate',
-    'Faça login para continuar no painel de solicitações.',
+    'Faça login para continuar no dashboard.',
   );
   navigateTo('/entrar');
 }
@@ -39,11 +39,11 @@ function goToPortal() {
         <h1>Gestão de viagens com foco em conversão, segurança e escala.</h1>
         <p class="description">
           Conecte atendimento comercial, orçamento e operação em um único fluxo digital.
-          O login da plataforma leva você direto para o módulo de solicitações.
+          O login da plataforma leva você direto para o dashboard operacional.
         </p>
         <div class="hero__cta-row">
           <button class="solid-btn solid-btn--lg" type="button" @click="goToPortal">
-            Ir para Solicitações
+            Ir para Dashboard
           </button>
           <NuxtLink class="ghost-btn ghost-btn--lg" to="/entrar">Acessar Conta</NuxtLink>
         </div>
@@ -343,4 +343,3 @@ function goToPortal() {
   }
 }
 </style>
-
