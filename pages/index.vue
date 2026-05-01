@@ -1,406 +1,346 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue';
-import { useAuthService } from '~/services/auth.service';
+const auth = useAuth();
+const notifications = useNotifications();
 
-type FeedbackType = 'success' | 'error' | '';
+const isAuthenticated = computed(() => auth.isAuthenticated.value);
 
-const authService = useAuthService();
-const runtimeConfig = useRuntimeConfig();
-
-const form = reactive({
-  email: '',
-  password: '',
-});
-
-const isLoading = ref(false);
-const feedback = ref('');
-const feedbackType = ref<FeedbackType>('');
-
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error) {
-    return error.message;
+function goToPortal() {
+  if (isAuthenticated.value) {
+    navigateTo('/solicitacoes-orcamento');
+    return;
   }
 
-  if (typeof error === 'object' && error !== null && 'data' in error) {
-    const payload = (error as { data?: { message?: string | string[] } }).data;
-    if (Array.isArray(payload?.message)) {
-      return payload.message.join(', ');
-    }
-    if (typeof payload?.message === 'string') {
-      return payload.message;
-    }
-  }
-
-  return 'Nao foi possivel autenticar com o backend local.';
-}
-
-async function onSubmit() {
-  feedback.value = '';
-  feedbackType.value = '';
-  isLoading.value = true;
-
-  try {
-    await authService.login({
-      email: form.email,
-      password: form.password,
-    });
-
-    feedback.value = 'Login enviado com sucesso para o backend.';
-    feedbackType.value = 'success';
-  } catch (error) {
-    feedback.value = getErrorMessage(error);
-    feedbackType.value = 'error';
-  } finally {
-    isLoading.value = false;
-  }
+  notifications.info(
+    'Acesso TripGate',
+    'Faça login para continuar no painel de solicitações.',
+  );
+  navigateTo('/entrar');
 }
 </script>
 
 <template>
-  <main class="login-home">
-    <div class="bg-orb bg-orb-a" />
-    <div class="bg-orb bg-orb-b" />
+  <main class="home-page">
+    <div class="bg-shape bg-shape--left" />
+    <div class="bg-shape bg-shape--right" />
 
-    <section class="login-shell">
-      <aside class="brand-pane">
-        <div class="brand-pane__logo-wrap">
-          <img class="brand-pane__logo" src="/tripgate-logo.png" alt="TripGate Viagens" />
-        </div>
-        <h1 class="brand-pane__title">Conexoes que transformam a forma de viajar.</h1>
-        <p class="brand-pane__text">
-          Hub de negocios no turismo com inteligencia comercial, distribuicao digital e atendimento
-          consultivo.
+    <header class="topbar">
+      <img src="/tripgate-logo.png" alt="TripGate" class="topbar__logo" />
+      <nav class="topbar__actions">
+        <NuxtLink class="ghost-btn" to="/entrar">Entrar</NuxtLink>
+        <button class="solid-btn" type="button" @click="goToPortal">
+          {{ isAuthenticated ? 'Abrir Painel' : 'Começar Agora' }}
+        </button>
+      </nav>
+    </header>
+
+    <section class="hero">
+      <div class="hero__copy">
+        <p class="eyebrow">Ecossistema TripGate</p>
+        <h1>Gestão de viagens com foco em conversão, segurança e escala.</h1>
+        <p class="description">
+          Conecte atendimento comercial, orçamento e operação em um único fluxo digital.
+          O login da plataforma leva você direto para o módulo de solicitações.
         </p>
-
-        <div class="brand-pane__chips">
-          <span>Curadoria estrategica</span>
-          <span>Modelo hibrido</span>
-          <span>Escala com confianca</span>
-        </div>
-      </aside>
-
-      <section class="login-pane">
-        <img class="login-pane__logo" src="/tripgate-logo.png" alt="TripGate Viagens" />
-        <h2 class="login-pane__title">Acesse sua conta</h2>
-        <p class="login-pane__subtitle">
-          Use seu e-mail e senha para testar a integracao com o backend local.
-        </p>
-
-        <form class="login-form" @submit.prevent="onSubmit">
-          <label class="field-label" for="email">E-mail</label>
-          <input
-            id="email"
-            v-model="form.email"
-            class="field-input"
-            type="email"
-            autocomplete="email"
-            placeholder="voce@tripgate.com"
-            required
-          />
-
-          <label class="field-label" for="password">Senha</label>
-          <input
-            id="password"
-            v-model="form.password"
-            class="field-input"
-            type="password"
-            autocomplete="current-password"
-            placeholder="Digite sua senha"
-            required
-          />
-
-          <button class="submit-button" type="submit" :disabled="isLoading">
-            {{ isLoading ? 'Entrando...' : 'Entrar' }}
+        <div class="hero__cta-row">
+          <button class="solid-btn solid-btn--lg" type="button" @click="goToPortal">
+            Ir para Solicitações
           </button>
-        </form>
+          <NuxtLink class="ghost-btn ghost-btn--lg" to="/entrar">Acessar Conta</NuxtLink>
+        </div>
+      </div>
 
-        <p class="api-target">API local: {{ runtimeConfig.public.apiBaseUrl }}</p>
-        <p v-if="feedback" :class="['feedback', `feedback--${feedbackType}`]">
-          {{ feedback }}
-        </p>
-      </section>
+      <aside class="hero__panel">
+        <h2>TripGate em números</h2>
+        <ul>
+          <li>
+            <strong>+120</strong>
+            <span>parceiros comerciais ativos</span>
+          </li>
+          <li>
+            <strong>24/7</strong>
+            <span>operação com monitoramento digital</span>
+          </li>
+          <li>
+            <strong>SLA curto</strong>
+            <span>resposta rápida para novas solicitações</span>
+          </li>
+        </ul>
+      </aside>
+    </section>
+
+    <section class="pillars">
+      <article>
+        <h3>Confiabilidade</h3>
+        <p>Arquitetura orientada a autenticação segura com renovação de sessão.</p>
+      </article>
+      <article>
+        <h3>Produtividade</h3>
+        <p>Fluxo de entrada simplificado para reduzir fricção no acesso do time.</p>
+      </article>
+      <article>
+        <h3>Experiência Mobile</h3>
+        <p>Interface desenhada com breakpoints reais e tipografia fluida.</p>
+      </article>
     </section>
   </main>
 </template>
 
 <style scoped>
-.login-home {
-  position: relative;
-  display: grid;
+.home-page {
   min-height: 100vh;
-  padding: 32px;
-  place-items: center;
+  padding: 1.1rem;
+  position: relative;
   overflow: hidden;
   background:
-    radial-gradient(circle at 10% 0%, rgb(116 184 181 / 45%), transparent 30%),
-    radial-gradient(circle at 100% 100%, rgb(28 95 148 / 26%), transparent 36%),
-    linear-gradient(140deg, #e9eae8 0%, #cedde7 62%, #d9d9d9 100%);
+    radial-gradient(circle at 10% 5%, rgb(116 184 181 / 26%), transparent 32%),
+    radial-gradient(circle at 90% 95%, rgb(28 95 148 / 18%), transparent 35%),
+    linear-gradient(145deg, #e9eae8 0%, #cedde7 100%);
 }
 
-.bg-orb {
+.bg-shape {
   position: absolute;
   border-radius: 999px;
-  filter: blur(1px);
   pointer-events: none;
+  filter: blur(1px);
 }
 
-.bg-orb-a {
-  width: 520px;
-  height: 520px;
-  top: -140px;
-  right: -90px;
-  opacity: 0.82;
-  background: linear-gradient(145deg, rgb(245 181 46 / 70%), rgb(242 122 46 / 78%));
+.bg-shape--left {
+  width: 16rem;
+  height: 16rem;
+  left: -5rem;
+  top: 68%;
+  background: linear-gradient(140deg, rgb(245 181 46 / 46%), rgb(242 122 46 / 48%));
 }
 
-.bg-orb-b {
-  width: 380px;
-  height: 380px;
-  bottom: -160px;
-  left: -110px;
-  opacity: 0.5;
-  background: linear-gradient(145deg, rgb(138 110 219 / 70%), rgb(28 95 148 / 60%));
+.bg-shape--right {
+  width: 20rem;
+  height: 20rem;
+  right: -7rem;
+  top: -4rem;
+  background: linear-gradient(140deg, rgb(15 34 51 / 24%), rgb(28 95 148 / 30%));
 }
 
-.login-shell {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: 1.05fr minmax(360px, 470px);
-  width: min(1160px, 100%);
-  min-height: 680px;
-  border: 1px solid rgb(15 34 51 / 10%);
-  border-radius: 28px;
-  overflow: hidden;
-  background: rgb(233 234 232 / 74%);
-  backdrop-filter: blur(10px);
-  box-shadow:
-    0 35px 95px rgb(15 34 51 / 18%),
-    inset 0 1px 0 rgb(255 255 255 / 42%);
-  animation: rise-in 0.8s ease-out;
-}
-
-.brand-pane {
+.topbar {
+  width: min(74rem, 100%);
+  margin: 0 auto;
+  padding: 0.75rem clamp(0.8rem, 2.5vw, 1.25rem);
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 24px;
-  padding: 48px 56px;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 1rem;
+  border: 1px solid rgb(15 34 51 / 10%);
+  background: rgb(255 255 255 / 72%);
+  backdrop-filter: blur(7px);
+}
+
+.topbar__logo {
+  width: clamp(6.8rem, 17vw, 8.4rem);
+}
+
+.topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.hero {
+  width: min(74rem, 100%);
+  margin: 1rem auto 0;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.8fr);
+}
+
+.hero__copy {
+  border-radius: 1.35rem;
+  border: 1px solid rgb(15 34 51 / 9%);
+  padding: clamp(1.3rem, 3.5vw, 2.3rem);
   background:
-    linear-gradient(125deg, rgb(15 34 51 / 97%), rgb(28 95 148 / 96%) 48%, rgb(15 34 51 / 94%)),
-    radial-gradient(circle at 90% 10%, rgb(245 181 46 / 28%), transparent 36%);
+    radial-gradient(circle at 95% 10%, rgb(245 181 46 / 18%), transparent 36%),
+    linear-gradient(130deg, rgb(15 34 51 / 96%), rgb(28 95 148 / 94%));
   color: #e9eae8;
+  box-shadow: 0 26px 54px rgb(15 34 51 / 20%);
 }
 
-.brand-pane__logo {
-  width: 180px;
-  max-width: 100%;
+.eyebrow {
+  margin: 0 0 0.65rem;
+  color: #f5b52e;
+  font: 700 0.8rem/1 'Work Sans', sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-.brand-pane__logo-wrap {
-  display: inline-flex;
-  width: fit-content;
-  padding: 10px 14px;
-  border: 1px solid rgb(233 234 232 / 35%);
-  border-radius: 14px;
-  background: linear-gradient(145deg, rgb(233 234 232 / 96%), rgb(206 221 231 / 88%));
-  box-shadow:
-    0 12px 28px rgb(15 34 51 / 26%),
-    inset 0 1px 0 rgb(255 255 255 / 36%);
-}
-
-.brand-pane__title {
+.hero__copy h1 {
   margin: 0;
-  font: 700 2.2rem/1.1 'REM', sans-serif;
+  font: 800 clamp(1.75rem, 4.6vw, 3rem) / 1.05 'REM', sans-serif;
   letter-spacing: -0.02em;
   text-wrap: balance;
 }
 
-.brand-pane__text {
-  margin: 0;
-  max-width: 46ch;
-  font-size: 1.05rem;
-  line-height: 1.55;
+.description {
+  margin: 1rem 0 0;
+  max-width: 55ch;
+  font: 500 clamp(0.94rem, 2.1vw, 1.08rem) / 1.58 'Work Sans', sans-serif;
   color: rgb(233 234 232 / 90%);
 }
 
-.brand-pane__chips {
+.hero__cta-row {
+  margin-top: 1.2rem;
   display: flex;
+  gap: 0.65rem;
   flex-wrap: wrap;
-  gap: 10px;
 }
 
-.brand-pane__chips span {
-  padding: 10px 14px;
-  border: 1px solid rgb(245 181 46 / 45%);
-  border-radius: 999px;
-  font-size: 0.83rem;
-  font-weight: 600;
-  color: #f5b52e;
-  background: rgb(245 181 46 / 10%);
+.hero__panel {
+  border-radius: 1.35rem;
+  padding: clamp(1.25rem, 3.3vw, 2rem);
+  border: 1px solid rgb(15 34 51 / 12%);
+  background: linear-gradient(155deg, rgb(255 255 255 / 88%), rgb(248 250 252 / 96%));
+  box-shadow: 0 18px 40px rgb(15 34 51 / 12%);
 }
 
-.login-pane {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 12px;
-  padding: 48px 38px;
-  background: linear-gradient(180deg, #fff 0%, #f8f9f7 100%);
-}
-
-.login-pane__logo {
-  width: 152px;
-  margin-bottom: 8px;
-}
-
-.login-pane__title {
-  margin: 0;
-  font: 700 2rem/1.12 'REM', sans-serif;
-  letter-spacing: -0.02em;
+.hero__panel h2 {
+  margin: 0 0 1rem;
+  font: 700 clamp(1.15rem, 3.2vw, 1.45rem) / 1.2 'REM', sans-serif;
   color: #0f2233;
 }
 
-.login-pane__subtitle {
-  margin: 0 0 14px;
-  font-size: 0.98rem;
-  line-height: 1.5;
-  color: rgb(15 34 51 / 72%);
+.hero__panel ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.75rem;
 }
 
-.login-form {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+.hero__panel li {
+  padding: 0.8rem 0.9rem;
+  border: 1px solid rgb(28 95 148 / 20%);
+  border-radius: 0.95rem;
+  background: linear-gradient(130deg, rgb(206 221 231 / 30%), rgb(233 234 232 / 70%));
+  display: grid;
+  gap: 0.2rem;
 }
 
-.field-label {
-  margin-top: 4px;
-  font-size: 0.86rem;
-  font-weight: 600;
+.hero__panel strong {
+  font: 800 1.05rem/1 'REM', sans-serif;
   color: #1c5f94;
 }
 
-.field-input {
-  width: 100%;
-  padding: 14px 14px 13px;
-  border: 1px solid rgb(15 34 51 / 18%);
-  border-radius: 12px;
-  outline: none;
-  font: 500 0.98rem/1.2 'Work Sans', sans-serif;
+.hero__panel span {
+  font: 500 0.86rem/1.35 'Work Sans', sans-serif;
+  color: rgb(15 34 51 / 78%);
+}
+
+.pillars {
+  width: min(74rem, 100%);
+  margin: 1rem auto 0;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.pillars article {
+  border-radius: 1rem;
+  border: 1px solid rgb(15 34 51 / 10%);
+  background: rgb(255 255 255 / 78%);
+  backdrop-filter: blur(6px);
+  padding: 1rem;
+}
+
+.pillars h3 {
+  margin: 0;
+  font: 700 1.06rem/1.2 'REM', sans-serif;
   color: #0f2233;
-  background: #fff;
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease,
-    transform 0.2s ease;
 }
 
-.field-input::placeholder {
-  color: rgb(15 34 51 / 45%);
+.pillars p {
+  margin: 0.5rem 0 0;
+  font: 500 0.89rem/1.45 'Work Sans', sans-serif;
+  color: rgb(15 34 51 / 77%);
 }
 
-.field-input:focus {
-  border-color: #1c5f94;
-  box-shadow:
-    0 0 0 4px rgb(116 184 181 / 23%),
-    0 7px 24px rgb(15 34 51 / 11%);
-  transform: translateY(-1px);
-}
-
-.submit-button {
-  margin-top: 14px;
-  border: none;
-  border-radius: 14px;
-  padding: 14px 16px;
+.solid-btn,
+.ghost-btn {
+  border-radius: 0.85rem;
+  font: 700 0.88rem/1 'REM', sans-serif;
+  padding: 0.75rem 1rem;
+  text-decoration: none;
   cursor: pointer;
-  font: 700 1rem/1 'REM', sans-serif;
-  color: #0f2233;
-  background: linear-gradient(115deg, #f5b52e 8%, #f27a2e 92%);
-  box-shadow:
-    0 12px 26px rgb(242 122 46 / 34%),
-    inset 0 1px 0 rgb(255 255 255 / 32%);
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease,
-    filter 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.submit-button:hover:not(:disabled) {
+.solid-btn {
+  border: 0;
+  color: #0f2233;
+  background: linear-gradient(115deg, #f5b52e 10%, #f27a2e 92%);
+  box-shadow: 0 12px 24px rgb(242 122 46 / 34%);
+}
+
+.solid-btn:hover {
   transform: translateY(-1px);
-  box-shadow:
-    0 16px 30px rgb(242 122 46 / 40%),
-    inset 0 1px 0 rgb(255 255 255 / 38%);
 }
 
-.submit-button:active:not(:disabled) {
-  transform: translateY(0);
+.solid-btn--lg {
+  padding-inline: 1.2rem;
 }
 
-.submit-button:disabled {
-  cursor: not-allowed;
-  filter: grayscale(0.25);
-  opacity: 0.8;
-}
-
-.api-target {
-  margin: 14px 0 0;
-  padding: 8px 12px;
-  border-radius: 10px;
-  font-size: 0.77rem;
-  color: rgb(15 34 51 / 75%);
-  background: rgb(206 221 231 / 42%);
-}
-
-.feedback {
-  margin: 10px 0 0;
-  padding: 11px 12px;
-  border-radius: 10px;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-.feedback--success {
+.ghost-btn {
+  border: 1px solid rgb(15 34 51 / 28%);
+  background: rgb(255 255 255 / 72%);
   color: #0f2233;
-  background: rgb(116 184 181 / 28%);
 }
 
-.feedback--error {
-  color: #7a2f06;
-  background: rgb(242 122 46 / 22%);
-}
-
-@keyframes rise-in {
-  from {
-    opacity: 0;
-    transform: translateY(20px) scale(0.99);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+.ghost-btn--lg {
+  border-color: rgb(233 234 232 / 30%);
+  color: #e9eae8;
+  background: rgb(233 234 232 / 10%);
 }
 
 @media (max-width: 980px) {
-  .login-home {
-    padding: 20px;
+  .home-page {
+    padding: 0.85rem;
   }
 
-  .login-shell {
+  .hero {
     grid-template-columns: 1fr;
-    min-height: auto;
   }
 
-  .brand-pane {
-    padding: 34px 26px;
+  .pillars {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .topbar {
+    padding: 0.7rem 0.75rem;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.65rem;
   }
 
-  .brand-pane__title {
-    font-size: 1.8rem;
+  .topbar__actions {
+    width: 100%;
+    justify-content: space-between;
   }
 
-  .login-pane {
-    padding: 32px 24px;
+  .hero__cta-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .solid-btn,
+  .ghost-btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .solid-btn,
+  .ghost-btn {
+    transition: none;
   }
 }
 </style>
+
