@@ -9,6 +9,7 @@ definePageMeta({
 const auth = useAuth();
 const notifications = useNotifications();
 const quoteRequestsService = useQuoteRequestsService();
+const route = useRoute();
 
 const isLoading = ref(true);
 const isRefreshing = ref(false);
@@ -46,6 +47,10 @@ function formatDateTime(value: string): string {
     dateStyle: 'short',
     timeStyle: 'short',
   }).format(new Date(value));
+}
+
+function isRouteActive(path: string): boolean {
+  return route.path === path;
 }
 
 function formatDate(value: string): string {
@@ -138,7 +143,10 @@ onMounted(async () => {
       </div>
 
       <div class="requests-header__actions">
-        <NuxtLink class="ghost-btn" to="/dashboard">Voltar ao dashboard</NuxtLink>
+        <NuxtLink :class="['ghost-btn', { 'ghost-btn--active': isRouteActive('/dashboard') }]" to="/dashboard">Dashboard</NuxtLink>
+        <NuxtLink :class="['ghost-btn', { 'ghost-btn--active': isRouteActive('/solicitacoes-orcamento') }]" to="/solicitacoes-orcamento">Solicitações</NuxtLink>
+        <NuxtLink :class="['ghost-btn', { 'ghost-btn--active': isRouteActive('/usuarios') }]" to="/usuarios">Usuários</NuxtLink>
+        <NuxtLink :class="['ghost-btn', { 'ghost-btn--active': isRouteActive('/landing-pages') }]" to="/landing-pages">Landing pages</NuxtLink>
         <button class="ghost-btn" type="button" @click="handleSignOut">Sair</button>
       </div>
     </header>
@@ -500,6 +508,11 @@ onMounted(async () => {
 }
 
 .solid-btn:hover,
+.ghost-btn--active {
+  border-color: rgb(15 34 51 / 44%);
+  color: #0f2233;
+  background: linear-gradient(115deg, #f5b52e 8%, #f27a2e 92%);
+}
 .ghost-btn:hover {
   transform: translateY(-1px);
 }
@@ -556,3 +569,5 @@ onMounted(async () => {
   }
 }
 </style>
+
+

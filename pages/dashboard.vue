@@ -13,6 +13,7 @@ definePageMeta({
 const auth = useAuth();
 const notifications = useNotifications();
 const quoteRequestsService = useQuoteRequestsService();
+const route = useRoute();
 
 const selectedPeriod = ref<DashboardPeriod>('today');
 const metrics = ref<DashboardMetricsResponse | null>(null);
@@ -74,6 +75,10 @@ const selectedRequestsCount = computed(() => metrics.value?.quote_requests.selec
 const requestsTodayCount = computed(() => metrics.value?.quote_requests.today ?? 0);
 const requestsTotalCount = computed(() => metrics.value?.quote_requests.total ?? 0);
 
+function isRouteActive(path: string): boolean {
+  return route.path === path;
+}
+
 async function fetchDashboard(period: DashboardPeriod, isPeriodUpdate = false) {
   if (isPeriodUpdate) {
     isUpdatingPeriod.value = true;
@@ -129,7 +134,10 @@ onMounted(async () => {
       </div>
 
       <div class="dash-topbar__actions">
-        <NuxtLink class="ghost-btn" to="/solicitacoes-orcamento">Ver solicitações</NuxtLink>
+        <NuxtLink :class="['ghost-btn', { 'ghost-btn--active': isRouteActive('/dashboard') }]" to="/dashboard">Dashboard</NuxtLink>
+        <NuxtLink :class="['ghost-btn', { 'ghost-btn--active': isRouteActive('/solicitacoes-orcamento') }]" to="/solicitacoes-orcamento">Solicitações</NuxtLink>
+        <NuxtLink :class="['ghost-btn', { 'ghost-btn--active': isRouteActive('/usuarios') }]" to="/usuarios">Usuários</NuxtLink>
+        <NuxtLink :class="['ghost-btn', { 'ghost-btn--active': isRouteActive('/landing-pages') }]" to="/landing-pages">Landing pages</NuxtLink>
         <button class="ghost-btn" type="button" @click="handleSignOut">Sair</button>
       </div>
     </header>
@@ -301,6 +309,11 @@ onMounted(async () => {
   transition: transform 0.2s ease;
 }
 
+.ghost-btn--active {
+  border-color: rgb(15 34 51 / 44%);
+  color: #0f2233;
+  background: linear-gradient(115deg, #f5b52e 8%, #f27a2e 92%);
+}
 .ghost-btn:hover {
   transform: translateY(-1px);
 }
@@ -521,3 +534,5 @@ onMounted(async () => {
   }
 }
 </style>
+
+
