@@ -33,6 +33,10 @@ const pagination = reactive({
   total_pages: 0,
 });
 
+const whatsappLinks = computed<Record<string, string | null>>(() =>
+  Object.fromEntries(items.value.map((item) => [item.id, buildWhatsAppLink(item)])),
+);
+
 const userDisplayName = computed(() => {
   const user = auth.user.value;
   if (!user) {
@@ -57,6 +61,187 @@ function formatDate(value: string): string {
   return new Intl.DateTimeFormat('pt-BR', {
     dateStyle: 'short',
   }).format(new Date(value));
+}
+
+function formatCount(value: number, singular: string, plural: string): string {
+  return `${value} ${value === 1 ? singular : plural}`;
+}
+
+function formatGuestsBreakdown(item: QuoteResponseItem): string {
+  const guestTypes = [
+    {
+      qty: item.guests.adt_qty,
+      singular: 'adulto',
+      plural: 'adultos',
+    },
+    {
+      qty: item.guests.chd_qty,
+      singular: 'criança',
+      plural: 'crianças',
+    },
+    {
+      qty: item.guests.inf_qty,
+      singular: 'bebê',
+      plural: 'bebês',
+    },
+  ];
+
+  const parts = guestTypes
+    .filter((guestType) => guestType.qty > 0)
+    .map((guestType) =>
+      formatCount(guestType.qty, guestType.singular, guestType.plural),
+    );
+
+  if (parts.length === 0) {
+    return 'Sem hóspedes informados';
+  }
+
+  return joinPartsWithAnd(parts);
+}
+
+function formatRoomsBreakdown(item: QuoteResponseItem): string {
+  return formatRoomTypesForMessage(item);
+}
+
+function formatLeadPhone(phone: string | null): string {
+  if (!phone) {
+    return 'Sem telefone';
+  }
+
+  const digits = phone.replace(/\D/g, '');
+  if (!digits) {
+    return phone;
+  }
+
+  if (digits.startsWith('55')) {
+    const local = digits.slice(2);
+    if (local.length === 11) {
+      const ddd = local.slice(0, 2);
+      const first = local.slice(2, 7);
+      const last = local.slice(7, 11);
+      return `+55 (${ddd}) ${first}-${last}`;
+    }
+
+    if (local.length === 10) {
+      const ddd = local.slice(0, 2);
+      const first = local.slice(2, 6);
+      const last = local.slice(6, 10);
+      return `+55 (${ddd}) ${first}-${last}`;
+    }
+  }
+
+  if (digits.length === 11) {
+    const ddd = digits.slice(0, 2);
+    const first = digits.slice(2, 7);
+    const last = digits.slice(7, 11);
+    return `(${ddd}) ${first}-${last}`;
+  }
+
+  if (digits.length === 10) {
+    const ddd = digits.slice(0, 2);
+    const first = digits.slice(2, 6);
+    const last = digits.slice(6, 10);
+    return `(${ddd}) ${first}-${last}`;
+  }
+
+  return phone;
+}
+
+function normalizeWhatsAppPhone(phone: string | null): string | null {
+  if (!phone) {
+    return null;
+  }
+
+  const onlyDigits = phone.replace(/\D/g, '');
+  const normalized = onlyDigits.startsWith('00') ? onlyDigits.slice(2) : onlyDigits;
+
+  if (normalized.length < 10) {
+    return null;
+  }
+
+  if (normalized.startsWith('55')) {
+    return normalized;
+  }
+
+  if (normalized.length === 10 || normalized.length === 11) {
+    return `55${normalized}`;
+  }
+
+  return normalized;
+}
+
+function joinPartsWithAnd(parts: string[]): string {
+  if (parts.length === 0) {
+    return '';
+  }
+
+  if (parts.length === 1) {
+    return parts[0];
+  }
+
+  if (parts.length === 2) {
+    return `${parts[0]} e ${parts[1]}`;
+  }
+
+  return `${parts.slice(0, -1).join(', ')} e ${parts[parts.length - 1]}`;
+}
+
+function formatRoomTypesForMessage(item: QuoteResponseItem): string {
+  const roomTypes = [
+    {
+      qty: item.rooms.sgl_room_qty,
+      singular: 'quarto individual',
+      plural: 'quartos individuais',
+    },
+    {
+      qty: item.rooms.dbl_room_qty,
+      singular: 'quarto duplo',
+      plural: 'quartos duplos',
+    },
+    {
+      qty: item.rooms.tpl_room_qty,
+      singular: 'quarto triplo',
+      plural: 'quartos triplos',
+    },
+    {
+      qty: item.rooms.qdp_room_qty,
+      singular: 'quarto quádruplo',
+      plural: 'quartos quádruplos',
+    },
+  ];
+
+  const parts = roomTypes
+    .filter((roomType) => roomType.qty > 0)
+    .map((roomType) =>
+      formatCount(roomType.qty, roomType.singular, roomType.plural),
+    );
+
+  if (parts.length === 0) {
+    return formatCount(item.rooms.total, 'quarto', 'quartos');
+  }
+
+  return joinPartsWithAnd(parts);
+}
+
+function buildWhatsAppMessage(item: QuoteResponseItem): string {
+  const leadFirstName = item.lead.name.trim().split(/\s+/)[0] || item.lead.name;
+  const roomTypes = formatRoomTypesForMessage(item);
+
+  return [
+    `Olá, ${leadFirstName}! 😊`,
+    'Aqui é da equipe TripGate.',
+    `Recebemos sua solicitação de orçamento para ${roomTypes}.`,
+    'Posso te enviar agora as melhores opções de viagem com valores e condições para o seu perfil? ✈️',
+  ].join(' ');
+}
+
+function buildWhatsAppLink(item: QuoteResponseItem): string | null {
+  const phone = normalizeWhatsAppPhone(item.lead.phone);
+  if (!phone) {
+    return null;
+  }
+
+  return `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(buildWhatsAppMessage(item))}`;
 }
 
 async function fetchResponses(options: { resetPage?: boolean; silent?: boolean } = {}) {
@@ -216,7 +401,7 @@ onMounted(async () => {
           <p class="request-card__label">Lead</p>
           <strong>{{ item.lead.name }}</strong>
           <p>{{ item.lead.email }}</p>
-          <p>{{ item.lead.phone || 'Sem telefone' }}</p>
+          <p>{{ formatLeadPhone(item.lead.phone) }}</p>
         </div>
 
         <div class="request-card__section">
@@ -233,6 +418,25 @@ onMounted(async () => {
           <span>Quartos: {{ item.rooms.total }}</span>
           <span>{{ formatDate(item.check_in_at) }} -> {{ formatDate(item.check_out_at) }}</span>
         </div>
+
+        <div class="request-card__section request-card__section--details">
+          <p class="request-card__label">Solicitações</p>
+          <p>{{ formatGuestsBreakdown(item) }}</p>
+          <p>{{ formatRoomsBreakdown(item) }}</p>
+        </div>
+
+        <a
+          v-if="whatsappLinks[item.id]"
+          class="request-card__whatsapp solid-btn"
+          :href="whatsappLinks[item.id] || '#'"
+          target="_blank"
+          rel="noreferrer noopener"
+        >
+          Contatar no WhatsApp
+        </a>
+        <p v-else class="request-card__whatsapp-hint">
+          Número de telefone indisponível para iniciar contato no WhatsApp.
+        </p>
       </article>
     </section>
 
@@ -264,6 +468,12 @@ onMounted(async () => {
   position: absolute;
   border-radius: 999px;
   pointer-events: none;
+  z-index: 0;
+}
+
+.requests-page > :not(.requests-glow) {
+  position: relative;
+  z-index: 1;
 }
 
 .requests-glow--a {
@@ -379,7 +589,7 @@ onMounted(async () => {
 .request-card {
   border-radius: 1rem;
   border: 1px solid rgb(15 34 51 / 12%);
-  background: rgb(255 255 255 / 88%);
+  background: #fff;
   padding: 0.95rem;
   display: grid;
   gap: 0.65rem;
@@ -425,6 +635,11 @@ onMounted(async () => {
   font: 500 0.82rem/1.35 'Work Sans', sans-serif;
 }
 
+.request-card__section--details {
+  border-top: 1px solid rgb(15 34 51 / 10%);
+  padding-top: 0.5rem;
+}
+
 .request-card__section a {
   width: fit-content;
   color: #1c5f94;
@@ -445,6 +660,17 @@ onMounted(async () => {
   color: #0f2233;
   background: linear-gradient(130deg, rgb(206 221 231 / 26%), rgb(233 234 232 / 62%));
   font: 700 0.72rem/1 'Work Sans', sans-serif;
+}
+
+.request-card__whatsapp {
+  width: 100%;
+  text-align: center;
+}
+
+.request-card__whatsapp-hint {
+  margin: 0;
+  color: rgb(15 34 51 / 66%);
+  font: 600 0.78rem/1.3 'Work Sans', sans-serif;
 }
 
 .pagination {
@@ -569,5 +795,3 @@ onMounted(async () => {
   }
 }
 </style>
-
-
