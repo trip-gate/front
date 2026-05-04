@@ -1,6 +1,7 @@
 import { useBackendService } from './backend.service';
 
 export type DashboardPeriod = 'today' | 'all_time';
+export type QuoteRequestStatus = 'PENDING' | 'IN_SERVICE' | 'CLOSED';
 
 export type DashboardMetricsResponse = {
   selected_period: DashboardPeriod;
@@ -59,6 +60,7 @@ export type QuoteResponsesListResponse = {
 
 export type QuoteResponseItem = {
   id: string;
+  status: QuoteRequestStatus;
   created_at: string;
   check_in_at: string;
   check_out_at: string;
@@ -104,6 +106,11 @@ export type QuoteResponsesFilters = {
   page_size?: number;
 };
 
+export type UpdateQuoteRequestStatusResponse = {
+  id: string;
+  status: QuoteRequestStatus;
+};
+
 function cleanFilters(filters: QuoteResponsesFilters): Record<string, string | number> {
   const entries = Object.entries(filters).filter(([, value]) => {
     if (typeof value === 'string') {
@@ -133,8 +140,19 @@ export function useQuoteRequestsService() {
     });
   }
 
+  function updateStatus(id: string, status: QuoteRequestStatus) {
+    return backend.request<UpdateQuoteRequestStatusResponse>(
+      `/quote-requests/${id}/status`,
+      {
+        method: 'PATCH',
+        body: { status },
+      },
+    );
+  }
+
   return {
     getDashboard,
     listResponses,
+    updateStatus,
   };
 }
