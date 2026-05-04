@@ -257,11 +257,13 @@ function formatRoomTypesForMessage(item: QuoteResponseItem): string {
 function buildWhatsAppMessage(item: QuoteResponseItem): string {
   const leadFirstName = item.lead.name.trim().split(/\s+/)[0] || item.lead.name;
   const roomTypes = formatRoomTypesForMessage(item);
+  const requestedPeriod = `${formatDate(item.check_in_at)} a ${formatDate(item.check_out_at)}`;
 
   return [
     `Olá, ${leadFirstName}! 😊`,
     'Aqui é da equipe TripGate.',
-    `Recebemos sua solicitação de orçamento para ${roomTypes}.`,
+    `Recebemos sua solicitação de orçamento para ${roomTypes}`,
+    `no período de ${requestedPeriod}.`,
     'Posso te enviar agora as melhores opções de viagem com valores e condições para o seu perfil? ✈️',
   ].join(' ');
 }
